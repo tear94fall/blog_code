@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  nginx:
+    image: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    container_name: nginx-proxy
+    depends_on:
+      - ping-server
+      - pong-server
+
+  ping-server:
+    build:
+      context: ./ping-server
+      dockerfile: ./Dockerfile
+    ports:
+      - "8081:8081"
+
+  pong-server:
+    build:
+      context: ./pong-server
+      dockerfile: ./Dockerfile
+    ports:
+      - "8082:8082"
