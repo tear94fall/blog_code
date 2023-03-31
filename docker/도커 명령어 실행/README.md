@@ -81,3 +81,29 @@ lo        Link encap:Local Loopback
           ...
           RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
 ```
+
+## 3. Docker 명령어 실행 응용하기
+
+때로는 서비스간에 통신 여부를 확인하기 위해 ping 을 확인 하는 방법도 있습니다.  
+member-service 컨테이너에서 auth-service 로 ping 명령어를 사용해보겠습니다.  
+다음과 같이 말이죠.
+
+```bash
+docker exec member-service ping auth-service
+PING auth-service (172.18.0.9): 56 data bytes
+64 bytes from 172.18.0.9: seq=0 ttl=64 time=0.165 ms
+64 bytes from 172.18.0.9: seq=1 ttl=64 time=0.119 ms
+64 bytes from 172.18.0.9: seq=2 ttl=64 time=0.116 ms
+```
+
+보다보면 신기한 부분이 있습니다. 바로 아이피를 통해 ping 명령어를 사용하는것이 아닙니다.  
+컨테이너 이름으로 ping 명령어를 사용하고 있습니다. 이게 어떻게 가능한걸까요?  
+도커 네트워크에 대해 더 자세히 알아야겠지만, 도커 네트워크는 기본값으로 bridge를 사용하고 있습니다.  
+bridge에서는 아이피 뿐만 아니라 도메인으로 컨테이너간 통신이 가능합니다.  
+간단히 도메인으로 컨테이너 아이디를 사용하여, ping 명령어 사용이 가능하다고 알아두면 될것같습니다.
+
+## 4. 마무리
+
+오늘은 exec를 사용한 도커 명령어 사용법에 대해 알아봤습니다.  
+또한 컨테이너 끼리는 어떻게 통신을 하게 되는가에 대해 고민을 해보는 시간도 가져보았습니다.  
+오늘은 간단히 다뤄보았지만, 나중에 좀 더 자세히 도커 네트워크에 대해 다뤄보도록 하겠습니다.  
