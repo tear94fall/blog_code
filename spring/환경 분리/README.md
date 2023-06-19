@@ -13,3 +13,50 @@
 그럼 어떻게 환경을 구분 할 수 있는지 알아보겠습니다.  
 
 ## 2. application.yml를 통한 profile 환경 분리
+
+우리가 보통 사용하는 application.yml 파일 입니다.  
+
+```yml
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:tcp://localhost:1521/test
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+    open-in-view: true
+
+logging:
+  level:
+    org.hibernate.type.descriptor.sql: trace
+```
+
+그럼 어떻게 application.yml 파일을 통해 환경을 분리 할 수 있을까요?  
+다행히 스프링에서는 이런한 기능을 옵션을 통해 제공하고 있습니다.  
+
+```yml
+spring:
+  config:
+    activate:
+      on-profile: create
+```
+
+위의 설정은 profile을 create라는 이름으로 사용하겠다는 뜻입니다.  
+
+```yml
+spring:
+  profiles:
+    default: dev
+```
+
+위의 설정은 만일 해당 설정에 해당되는 값이 없을때, 기본 프로필로 무엇을 사용할것인가를 설정합니다.  
