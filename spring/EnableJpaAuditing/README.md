@@ -1,5 +1,7 @@
 # EnableJpaAuditing 사용해보기
 
+![intro](./images/BaseEntity.png)
+
 ## 1. JPA Auditing 이란 무엇인가?
 
 데이터 베이스에 존재하는 테이블들에는 공통적으로 존재하는 데이터들이 있습니다.  
@@ -46,8 +48,10 @@ public class Member extends BaseTimeEntity {
 
 ## 2. @EnableJpaAuditing 사용하기
 
-@EnableJpaAuditing 어노테이션을 사용하기 위해서는 build.gradle 파일에 다음과 같은 의존성을 추가해줘야 합니다.  
-```gradle
+@EnableJpaAuditing 어노테이션을 사용하기 위해서 의존성을 추가해줍니다.
+build.gradle 파일에 다음과 같은 의존성을 추가해줘야 합니다.  
+
+```java
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 }
@@ -57,7 +61,7 @@ dependencies {
 
 ```java
 @MappedSuperclass
-@EntityListeners(AuditingEntityListener::class)
+@EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity {
 
 	@CreatedDate
@@ -68,14 +72,16 @@ public abstract class BaseEntity {
 }
 ```
 
-`@MappedSuperclass` 어노테이션은 공통적으로 필요한 속성들을 부모클래스에 선언하고, 자식 클래스에서 상속 받을떄 사용합니다.  
+`@MappedSuperclass` 어노테이션은 공통적으로 필요한 속성들을 부모클래스에 선언하고
+자식 클래스에서 상속 받을떄 사용합니다.  
 클래스 관계로 볼때는 상속관계이나 DB에 저장되는 형태는 상속관계를 따르지 않습니다.  
-`BaseEntity`를 상속받은 엔티티들을 실제 DB에 저장후 확인해보면 테이블마다 `BaseEntity`의 데이터가 존재하게 됩니다.  
+`BaseEntity`를 상속받은 엔티티들을 실제 DB에 저장후 확인해보면
+테이블마다 `BaseEntity`의 데이터가 존재하게 됩니다.  
 
-`@EntityListeners(AuditingEntityListener::class)` 어노테이션은 크게 두개 부분을 확인해봐야 합니다.  
+`@EntityListeners(AuditingEntityListener.class)` 어노테이션은 크게 두개 부분을 확인해봐야 합니다.  
 `@EntityListeners` 어노테이션은 JPA 엔티티에서 이벤트 발생시 특정 로직을 수행할수 있도록 하는 어노테이션 입니다.  
 `AuditingEntityListener` 클래스는 Spring Data JPA 에서 제공하는 이벤트 리스너입니다.  
-@CreatedDate, @LastModifiedDate 같은 어노테이션을 탐색해 엔티티 이벤트 발생시 해당 값을 자동으로 채워줍니다.  
+`@CreatedDate, @LastModifiedDate` 어노테이션을 탐색해 엔티티 이벤트 발생시 해당 값을 자동으로 채워줍니다.  
 
 ```java
 @EnableJpaAuditing
@@ -88,10 +94,11 @@ public class EsApplication {
 }
 ```
 
-엔티티에 사용할때는 위와 같이 상속 받아 사용하면 됩니다.   
+그리고 `@EnableJpaAuditing`을 Application 위에 추가 해줍니다.  
 
 ```java
 public class Member extends BaseEntity {
+    ...
 }
 ```
 
@@ -102,10 +109,11 @@ public class Member extends BaseEntity {
 @EnableJpaAuditing
 @Configuration
 public class JpaAuditConfig {
+    ...
 }
 ```
 
-그리고 BaseEntity에 수정 시간 말고 생성자와 수정자도 추가할수 있습니다.  
+그리고 BaseEntity에 수정 시간 외에도 생성자와 수정자도 추가할수 있습니다.  
 
 ```java
 @CreatedBy
@@ -136,10 +144,15 @@ public class JpaAuditConfig {
 public class AuditorAwareImpl implements AuditorAware<String> {
 
     @Override
-    public Optional<String>  getCurrentAuditor() {
+    public Optional<String> getCurrentAuditor() {
         // 여기서 Spring Security의 Authentication 객체를 가져와 현재 로그인 사용자 정보를 가져와 리턴한다.  
     }
 }
 ```
 
 ## 3. 마무리
+
+데이터 베이스가 언제 생성/수정되었는지는 때로는 장애를 해결하는데 아주 중요한 역할을 하기도 합니다.  
+스프링에서는 다행히 이러한 기능들을 제공하고 있어서 편리하게 사용할수 있습니다.  
+필요에 따라 생성/수정 시간만 필요하는 경우에는 BaseEntity를 분할해서 사용할 수도 있습니다.  
+다양한 기능을 프로젝트에 상황에 맞게 사용하시기 바랍니다.  
