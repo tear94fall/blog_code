@@ -1,5 +1,7 @@
 # JPA N+1 문제 해결하기
 
+![intro](./images/n+1query.png)
+
 ## 1. N+1 문제란 무엇인가?
 
 N+1 문제란? 연관관계가 설정된 데이터를 조회할때 방생하는 문제입니다.  
@@ -54,12 +56,15 @@ N+1 문제는 데이터 조회하는 쿼리(1)의 데이터의 갯수 N 만큼 �
 
 ```java
 @Entity
-public class User {
+public class Member {
+
     @Id
     @GeneratedValue
     private long id;
 
-    @OneToMany(fetch = FetchType.EAGER) // 즉시 로딩
+    private String name;
+
+    @OneToMany(mappedBy = "member", fetch = FetchType.EAGER) // 즉시 로딩
     private List<Post> posts = new ArrayList<>();
 }
 ```
@@ -67,28 +72,42 @@ public class User {
 ```java
 @Entity
 public class Post {
+
     @Id
     @GeneratedValue
     private long id;
 
-    @ManyToOne(fetch = FetchType.EAGER) // 즉시 로딩
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private String name;
+
+    @ManyToOne
+    private Member member;
 }
 ```
 
-연관관계의 fetch 타입을 지연 로딩으로 설정 해줍니다.  
-예제에서는 N+1을 발생시켜야 하므로 즉시로딩을 사용하도록 합니다.  
+예제에서는 N+1을 발생시켜야 하므로 즉시로딩을 사용하도록 하겠습니다.  
+로딩 방식에는 지연 로딩/즉시 로딩이 있습니다.  
 
-지연 로딩/즉시 로딩의 차이에 대해 알아보도록 하겠습니다.  
+```java
+@OneToMany(mappedBy = "member", fetch = FetchType.EAGER) // 즉시 로딩
+private List<Post> posts = new ArrayList<>();
+```
+
+방금 위에서 우리는 `FetchType.EAGER` 으로 설정해주었는데요.  
+지연 로딩으로 설정하려면 다음과 같이 `FetchType.LAZY`으로 설정 해야 합니다.   
+
+그럼 지연 로딩/즉시 로딩의 차이에 대해 알아보도록 할까요?   
 즉시 로딩의 경우 데이터를 조회할때 연관된 데이터까지 한번에 불러오는 방법입니다.  
 유저 데이터를 조회하는 경우 게시글까지 `즉시` 조회하는 방식 입니다.  
 
 지연 로딩은 데이터 조회시 연관된 데이터를 `즉시` 조회하지 않고, 나중에(`지연`) 가져오는 방식 입니다.  
-유저 데이터를 조회하는 경우, 유저 데이터를 조회를 해서 가져옵니다.  
-하지만 게시글 데이터는 바로 가져오지 않고, 연관 데이터에 프록시 객체(임시객체)를 생성후 설정해놓습니다.  
+디자인 패턴중 `싱글톤 패턴` 에서의 `늦은 초기화`를` 생각해보시면 이해가 빠를것 같습니다.  
+선언과 동시에 초기화를 하지않고, 사용할때 초기화하여 사용하는 `늦은 초기화`와 동일합니다.  
+
+유저 데이터를 조회하는 경우, 데이터 베이스에서 유저 데이터를 조회를 해서 가져옵니다.  
+하지만 게시글 데이터는 바로 가져오지 않고, 연관 데이터에 프록시 객체(임시 객체)를 생성후 설정해놓습니다.  
 그리고 연관된 데이터를 참조하는 시점(실제 사용 시점)에 객체를 가져오는 방법입니다.   
-연관관계로 맺어진 데이터를 바로 사용하는 경우가 아니라면, 임시 객체를 넣어 놓고 실제 사용하는 경우에 조회해 오는 방식입니다.  
+즉, 지연 로딩은 연관관계로 맺어진 데이터중 일부만 실제로 조회 하고
+일부 데이터에는 임시 객체를 넣어 놓고 실제 사용하는 시점에 조회해 오는 방식입니다.  
 
 전체 유저를 조회해보기 전에, N+1 문제를 눈으로 확인하기 위해 설정 하나를 추가해주도록 해보겠습니다.  
 실제 구동되는 쿼리를 눈으로 보기 위해서 `application.yaml` 파일에 아래 내용을 추가해줍니다.  
@@ -105,28 +124,87 @@ spring:
 이제 전체 유저를 조회해봅니다.  
 
 ```java
-userRepository.findAll();
+memberRepository.findAll();
 ```
 
-이제 실제 수행된 쿼리문을 확인해보자.  
+이제 실제 수행된 쿼리문을 확인해보겠습니다.  
 
 ```sql
-
+...
+2023-08-03 17:57:47.249 TRACE 6940 --- [    Test worker] o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [BIGINT] - [5]
+2023-08-03 17:57:47.250 DEBUG 6940 --- [    Test worker] org.hibernate.SQL                        : 
+    select
+        posts0_.member_id as member_i3_1_0_,
+        posts0_.id as id1_1_0_,
+        posts0_.id as id1_1_1_,
+        posts0_.member_id as member_i3_1_1_,
+        posts0_.name as name2_1_1_ 
+    from
+        post posts0_ 
+    where
+        posts0_.member_id=?
+2023-08-03 17:57:47.251 TRACE 6940 --- [    Test worker] o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [BIGINT] - [4]
+2023-08-03 17:57:47.252 DEBUG 6940 --- [    Test worker] org.hibernate.SQL                        : 
+    select
+        posts0_.member_id as member_i3_1_0_,
+        posts0_.id as id1_1_0_,
+        posts0_.id as id1_1_1_,
+        posts0_.member_id as member_i3_1_1_,
+        posts0_.name as name2_1_1_ 
+    from
+        post posts0_ 
+    where
+        posts0_.member_id=?
+2023-08-03 17:57:47.253 TRACE 6940 --- [    Test worker] o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [BIGINT] - [3]
+2023-08-03 17:57:47.255 DEBUG 6940 --- [    Test worker] org.hibernate.SQL                        : 
+    select
+        posts0_.member_id as member_i3_1_0_,
+        posts0_.id as id1_1_0_,
+        posts0_.id as id1_1_1_,
+        posts0_.member_id as member_i3_1_1_,
+        posts0_.name as name2_1_1_ 
+    from
+        post posts0_ 
+    where
+        posts0_.member_id=?
+...
 ```
-(수정 필요)
-우리는 여기서 무언가 이상함을 눈치챌 수 있습니다.   
+
+눈치채셨나요?     
 실제로 유저를 조회하는 쿼리 1개만 나갈것으로 예상했지만, 다수의 쿼리가 나간것을 확인할수 있습니다.  
-각각의 팀은 팀원을 가지고있고, 팀을 조회하는 경우 팀에 소속된 팀원의 정보를 가져와야 합니다.  
-팀이 10개면 각각의 팀의 팀원을 조회하는 쿼리가 1개씩 총 10번의 쿼리가 발생하게됩니다.  
+
+```sql
+2023-08-03 17:57:47.209 DEBUG 6940 --- [    Test worker] org.hibernate.SQL                        : 
+    select
+        member0_.id as id1_0_,
+        member0_.email as email2_0_,
+        member0_.password as password3_0_,
+        member0_.username as username4_0_ 
+    from
+        member member0_
+```
+
+단, 유저를 조회 하는 쿼리는 1개만 발생하였습니다.   
+그럼 위의 쿼리는 무엇일까요?
+네! 바로 유저와 일대다 연관관계를 맺고 있는 `Post` 테이블 입니다.  
+유저는 여러개의 게시글을 가지고 있고, 유저를 조회하는 경우 유저의 게시글들 역시 조회 해야 합니다.  
+유저가 10명이고 각 유저는 게시글 10개를 가지고 있다면, 게시글 조회 쿼리가 유저마다 1개씩 발생합니다.  
+만일 유저가 1000명이면 총 1000개의 추가 쿼리가 발생하개 됩니다.   
+1+N 문제 라고도 불리는 이유가 바로 이겁니다. 1개의 쿼리에서 추가로 N개의 쿼리가 발생하니까요.   
+
 N+1 문제는 N과 1이 의미하는 바는 바로 다음과 같습니다.   
-N (팀에 소속된 팀원을 조회하는 쿼리) +(추가로 발생) 1 (팀전체를 조회하는 쿼리)
+N (각 유저의 게시물을 조회하는 쿼리) + 1 (유저들을 조회하는 쿼리)
+
+## 2. N+1 문제 해결하기
+
+그럼 무엇이 문제였을까요? 즉시 로딩이 문제였을까요?   
+한번 즉시 로딩을 지연 로딩으로 변경해보겠습니다.  
 
 ```java
 @OneToMany(fetch = FetchType.EAGER)
 ```
 
-그럼 무엇이 문제였을까요? 즉시 로딩이 문제였을까요?
-한번 즉시 로딩을 지연 로딩으로 변경해보겠습니다
+`EAGER` 를 `LAZY`로 변경해주도록 하겠습니다.  
 
 ```java
 @OneToMany(fetch = FetchType.LAZY)

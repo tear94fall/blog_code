@@ -1,31 +1,48 @@
 package com.example.demo.member.entity;
 
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.example.demo.member.dto.MemberDto;
+import lombok.*;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
-@Data
 @Entity
-@Table(name = "members")
+@Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "MEMBER_ID")
-    private long id;
+    private Long id;
 
-    private String name;
+    @Column(unique = true)
+    private String email;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "team_id")
-    private Team team;
+    @Column
+    private String password;
+
+    @Column
+    private String username;
+
+    @OneToMany(mappedBy = "member", fetch = FetchType.EAGER)
+    private List<Post> posts = new ArrayList<>();
 
     @Builder
-    public Member(String name) {
-        this.name = name;
+    public Member(String email, String username, String password) {
+        this.email = email;
+        this.username = username;
+        this.password = password;
+    }
+
+    public static Member toMemberEntity(MemberDto memberDto) {
+        Member member = new Member();
+
+        member.email = memberDto.getEmail();
+        member.username = memberDto.getUsername();
+        member.password = memberDto.getPassword();
+
+        return member;
     }
 }

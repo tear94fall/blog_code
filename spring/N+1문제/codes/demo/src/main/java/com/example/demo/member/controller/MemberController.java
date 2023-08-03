@@ -1,23 +1,24 @@
 package com.example.demo.member.controller;
 
-import com.example.demo.member.entity.Member;
+import com.example.demo.member.dto.MemberDto;
 import com.example.demo.member.service.MemberService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-public class MemberController {
+        @AllArgsConstructor
+        public class MemberController {
 
-    @Autowired
-    private MemberService memberService;
+            private final MemberService memberService;
 
-    @GetMapping("/member")
-    public ResponseEntity<List<Member>> searchMember() {
-        List<Member> members = memberService.findAll();
-        return ResponseEntity.ok().body(members);
+            @GetMapping("member/{id}")
+            public ResponseEntity<MemberDto> findMember(@PathVariable Long id) {
+                return ResponseEntity.ok().body(memberService.findMemberById(id));
+            }
+
+            @PostMapping("member")
+            public ResponseEntity<MemberDto> registerMember(@RequestBody MemberDto memberDto) {
+                return ResponseEntity.ok().body(memberService.createMember(memberDto));
     }
 }

@@ -1,0 +1,8 @@
+### 멤버 조회
+GET http://localhost:8080/member/1
+
+### 멤버 추가
+POST http://localhost:8080/member
+Content-Type: application/json
+
+< Member.json

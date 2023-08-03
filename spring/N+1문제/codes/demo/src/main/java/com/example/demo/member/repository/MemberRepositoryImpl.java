@@ -1,25 +1,24 @@
 package com.example.demo.member.repository;
 
 import com.example.demo.member.entity.Member;
+import com.example.demo.member.entity.QMember;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
-import static com.example.demo.member.entity.QMember.member;
+import static com.example.demo.member.entity.QMember.*;
 
 @Repository
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Member> findAllMember() {
-
+    public Member findByMemberId(Long id) {
         return queryFactory
                 .selectFrom(member)
-                .fetch();
+                .where(member.id .eq(id))
+                .fetchOne();
     }
 }

@@ -1,25 +1,21 @@
-package com.example.demo.member.config;
+package com.example.demo.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-@EnableJpaAuditing
 @Configuration
-public class QueryDslConfig {
+public class QuerydslConfiguration {
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public QueryDslConfig() {
-    }
-
     @Bean
     public JPAQueryFactory jpaQueryFactory() {
-        return new JPAQueryFactory(this.entityManager);
+        return new JPAQueryFactory(entityManager);
     }
+
 }
