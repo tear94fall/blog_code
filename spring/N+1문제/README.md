@@ -247,6 +247,21 @@ team.getUsers.forEach(user -> {
 그럼 제일 중요한 실제 수행되는 쿼리문을 한번 보겠습니다.
 
 ```sql
+
+...
+2023-08-03 18:13:33.225 DEBUG 6940 --- [Test worker] org.hibernate.SQL : 
+    select
+        posts0_.member_id as member_i3_1_0_,
+        posts0_.id as id1_1_0_,
+        posts0_.id as id1_1_1_,
+        posts0_.member_id as member_i3_1_1_,
+        posts0_.name as name2_1_1_ 
+    from
+        post posts0_ 
+    where
+        posts0_.member_id=?
+...
+
 ```
 
 네 맞습니다. N+1 문제가 발생하였습니다.   
@@ -256,9 +271,22 @@ team.getUsers.forEach(user -> {
 결국 게시글들의 정보를 사용하는 순간에는 조회를 해야합니다. 그러기 위해서는 결국 추가 쿼리가 필요합니다.    
 그럼 어떻게 해야 N+1 문제를 해결할 수 있을까요?   
 
-## 5. N+1 문제 해결 방법
+## 5. N+1 문제 해결 방안
+
+처음으로 돌아가서 우리가 하려던 것은 무엇이었을까요?   
+데이터를 조회하려고 했고, 조회하려는 데이터의 연관관계에 있는 데이터를 조회하였습니다.  
+그 과정에서 `N+1` 문제가 발생한것입니다.  
+좀 더 원론적으로 들어가서 만약 순수 SQL로 데이터를 조회하려 하였다면, 어떻게 했을까요?  
+바로 `SELECT * FROM member LEFE JOIN post ON member.post_id = post.id` 다음과 같은 쿼리를 이용헀을 것입니다.  
+이것을 ORM을 통해 해결하려다 보니 `N+1`문제가 발생한것 입니다.  
 
 * 연관된 데이터를 조인하여 한번에 가져온다.  
 * 유저의 게시글을 모아서 한번에 조회한다.  
+
+### 5.1. FetchJoin
+
+### 5.2. EntityGraph
+
+### 5.3. BatchSize
 
 ## 6. N+1 문제 돌아보기
