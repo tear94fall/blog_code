@@ -1,4 +1,4 @@
-# EnableJpaAuditing 사용해보기
+# [Spring] EnableJpaAuditing 사용해보기
 
 ![intro](./images/BaseEntity.png)
 
