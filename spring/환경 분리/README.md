@@ -220,4 +220,32 @@ yml 파일을 사용하는 이유는 properties 파일과는 다르게 계층형
 또한 properties 파일에 비해 반복되는 내용이 적습니다.  
 또한 List 형태의 데이터도 - 를 통해 쉽게 설정이 가능합니다.  
 
+### 5.2. @Valu 어노테이션
+
+설정 파일에 설정된 값을 사용해야하는 경우도 있습니다.  
+이경우 @Value 어노테이션을 통해서 Bean 내부에서 값을 주입 받아 사용하기도 합니다.  
+
+```java
+@Component
+@RequiredArgsConstructor
+public class JwtTokenProvider {
+
+    private static Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
+
+    @Value("${security.jwt.token.secret-key}")
+    private String secretKey;
+    @Value("${security.jwt.token.expire-length:200000}")
+    private long validityInMilliseconds;
+
+    ...
+}
+```
+
+다음은 jwt 토큰을 생성하는 코드입니다.   
+jwt토큰 생성에 사용하는 secrete key 같은 예민한 정보는 파일로 설정 후 주입받아 사용합니다.    
+앞서 말씀드린것과 같이 예민한 정보는 따로 파일로 분리하고, .gitignore 파일에 등록합니다.   
+이와같은 정보들은 외부로 노출되지 않도록 합니다.   
+
+또한 설정파일에 해당 정보가 없는 경우에는 : 구분자를 통해 기본값을 넣어주는것 역시 가능합니다.  
+
 ## 6. 마무리
