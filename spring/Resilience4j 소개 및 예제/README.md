@@ -50,6 +50,60 @@ Hystrix가 아닌 Resilience4j가 사용해야 되는 이유는 Hystrix가 maint
 
 ## 2. Resilience4j 예제
 
-### 2.1. Resilience4j 동작 과정
+### 2.1. Resilience4j 소개
 
-Resilience4j는 circuit-breaker 뿐만 아니라 Retry등 다양한 기능을 제공하고 있습니다.   
+Resilience4j는 circuit-breaker 뿐만 아니라 Retry등 다양한 기능을 Core Module로 제공하고 있습니다.   
+Core Module은 총 6가지로 구성되어 있으며 간단히 살펴보겠습니다.   
+
+|Core Modules|기능|
+|------|---|
+|CircuitBreaker|장애 발생시 장애전파되는것을 방지|
+|Bulkhead|동시 실행 횟수를 제한|
+|RateLimiter|일정시간 동안 요청 제한|
+|Retry|요청 실패시 재시도 설정|
+|TimeLimiter|요청 호출 시간을 제한|
+|Cache|결과 캐싱 기능|
+
+6가지의 기능중 CircuitBreaker는 CLOSED, OPEN, HALF_OPEN 세가지의 일반적인 상태를 가지고 있으며,   
+두개의 특별한 상태인 DISABLED, FORCED_OPEN를 가지고 있습니다.   
+각각의 상태는 다음 그림 처럼 조건에 따라 다음과 변경되며 각각에 맞는 동작을 수행합니다.   
+
+![intro](./images/resilience4j-circuit-breaker.jpg)
+
+그럼 각각의 상태가 의미하는 바를 보도록 하겠습니다.   
+
+|상태|설명|
+|---|---|
+|CLOSED|서킷 브레이커의 상태가 닫힌 상태로 정상적인 상황|
+|OPEN|서킷 브레이커의 상태가 열린 상태로 장애가 발생해 서킷 브레이커가 동작하는 상황|
+|HALF_OPEN|서킷 브레키어의 상태가 열린 상태로 일정 시간이 지난 상태|
+
+우선 OPEN, CLOSED에 대해서 살펴보면 CLOSED는 부정적인 의미로 장애 상황일 것 같습니다.  
+반대로 OPEN은 긍정적인 뜻으로 정상 상황일 것 같습니다.  
+하지만 반대 입니다. 장애 상황에 대해서 바라보지 않고, 서킷 브레이커의 활성/비활성 상태로 생각하시면 이해가 빠릅니다.  
+서킷 브레이커가 OPEN이 되는 경우는 장애가 발생한 경우, 반대로 CLOSED된 경우는 장애가 없는 상황입니다.   
+의미가 헷갈릴수 있으나 확실하게 이해하고 계시는게 좋습니다.   
+HALF_OPEN은 반만 열린 상태로 이후 상황에 따라 다시 OPEN될수도 CLOSED될수도 있습니다.   
+
+그럼 상태를 변경하는 기준은 어떻게 될까요? 상태를 변경하는 기준은 크게 두가지 입니다.   
+시간 기반과 횟수 기반이 있습니다. 이것을 가지고 슬라이딩 윈도우알고리즘을 통해 상태를 변경합니다.  
+tcp 프로토콜에서의 그 슬라이딩 윈도우가 바로 맞습니다.  
+[슬라이딩 윈도우](https://en.wikipedia.org/wiki/Sliding_window_protocol) 슬라이딩 윈도우에 대해 자세히 알고싶으시면 이 문서를 참고 하시기 바랍니다.   
+
+시간 기반의 경우 특정 시간동안 요청된 갯수 중 몇%이상이 실패인 경우 서킷 브레이커를 OPEN 합니다.  
+반대로 횟수 기반의 경우 몇회의 요청중 몇%이상이 실패인 경우 서킷 브레이커를 OPEN 합니다.  
+시간 기반과 횟수 기반은 결국 슬라이딩 윈도우 크기를 결정하는 방식입니다.   
+결국 전체의 요청중 장애 상황으로 구분할 실패 요청 갯수를 통해 장애 상황을 판단하게 됩니다.  
+
+### 2.2 예제
+
+그럼 이제 서킷 브레이커를 예제 코드로 한번 살펴보도록 하겠습니다.   
+
+```gradle
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+```
+
+우선 build.gradle에 의존성을 추가해주도록 합니다.   
+주의해야할 사항이 aop 를 반드시 추가해주어야 합니다.  
+실무 프로젝트에서는 aop가 자주 사용되지만, 학습을 위한 경우 aop 를 추가하지 않아 서킷 브레이커가 에상대로 작동되지 않았던 경험이 있습니다.   
