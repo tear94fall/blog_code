@@ -1,0 +1,10 @@
+
+
+### 메시지 발행
+POST http://localhost:8081/send/message
+Content-Type: application/json
+
+{
+  "title" : "Message Title From Service 2",
+  "content" : "Message Content From Service 2"
+}

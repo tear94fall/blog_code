@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: queue-service
+
+  rabbitmq:
+    host: rabbitmq_test
+    port: 5672
+    username: admin
+    password: admin
+
+rabbitmq:
+  queue:
+    name: test-q1
+  exchange:
+    name: test-ex
+  routing:
+    key: ""

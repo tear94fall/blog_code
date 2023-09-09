@@ -1,0 +1,44 @@
+version: '3'
+services:
+  rabbitmq:
+    container_name: rabbitmq_test
+    image: rabbitmq:management
+    environment: 
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - 25672:25672
+    networks:
+      - queue-network
+
+  queue-service1:
+    build:
+      context: ./demo
+      dockerfile: ./Dockerfile
+    container_name: queue-service1
+    ports:
+      - 8080:8080
+    depends_on:
+      - rabbitmq
+    restart: always
+    networks:
+      - queue-network
+
+  queue-service2:
+    build:
+      context: ./demo2
+      dockerfile: ./Dockerfile
+    container_name: queue-service2
+    ports:
+      - 8081:8080
+    depends_on:
+      - rabbitmq
+    restart: always
+    networks:
+      - queue-network
+
+networks:
+  queue-network:
+    driver: bridge
