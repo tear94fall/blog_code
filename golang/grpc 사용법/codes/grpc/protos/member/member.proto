@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package member;
+
+option go_package = "./";
+
+service MemberService {
+    rpc Signup(MemberSignupRequest) returns (MemberSignResponse);
+    rpc Login(MemberLoginRequest) returns (MemberLoginResponse);
+}
+
+message MemberSignupRequest {
+    string user_id = 1;
+    string password = 2;
+    string email = 3;
+    string username = 4;
+    int32 age = 5;
+}
+
+message MemberSignResponse {
+    string result = 1;
+}
+
+message MemberLoginRequest {
+    string user_id = 1;
+    string password = 2;
+}
+
+message MemberLoginResponse {
+    string result = 1;
+}
