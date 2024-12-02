@@ -36,7 +36,9 @@
 * 의존성 주입 (DI)  
 * 캐시 사용하기 (Caffeine)  
 * 캐시 사용하기 (Redis)  
+* Kafka Exactly Once Semantics
 
 ## trouble shooting
 * 캐싱 도입 과정
+* 캐싱 도입 이후
 * 분산 DB를 사용하면서 겪은 경험
